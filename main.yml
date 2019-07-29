@@ -1,0 +1,44 @@
+---
+- hosts: servers
+  connection: local
+  vars_files:
+    - "vaultfile.yml"
+
+  tasks:
+  - name: Install Python packages
+    pip:
+      name: 
+        - docker
+
+  - name: Run adminer container 
+    docker_container:
+      name: adminer
+      image: adminer
+      ports:
+        - 8080:8080
+
+  - name: Run PostgreSQL container
+    docker_container:
+      name: postgres
+      image: postgres
+      restart: yes
+      env:
+        POSTGRES_USER: "{{ POSTGRES_USER }}"
+        POSTGRES_PASSWORD: "{{ POSTGRES_PASSWORD }}"
+      volumes:
+        - "{{ POSTGRES_DATA_VOLUME }}:/var/lib/postgresql/data"
+
+  - name: Run nextcloud container
+    docker_container:
+      name: nextcloud
+      image: linuxserver/nextcloud
+      restart: yes
+      env:
+        PUID: "1000"
+        PGID: "1000"
+        TZ: "Europe/Helsinki"
+      volumes:
+        - "{{ NEXTCLOUD_CONFIG_VOLUME }}:/config"
+        - "{{ NEXTCLOUD_DATA_VOLUME }}:/data"
+      ports:
+        - 9443:443
