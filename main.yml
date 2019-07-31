@@ -1,6 +1,14 @@
 ---
 - hosts: servers
   connection: local
+
+  vars:
+    timezone: "Europe/Helsinki"
+    POSTGRES_USER: "nextcloud"
+    POSTGRES_DATA_VOLUME: "/data/Nextcloud/postgres_data"
+    NEXTCLOUD_CONFIG_VOLUME: "/data/Nextcloud/nextcloud_data/config"
+    NEXTCLOUD_DATA_VOLUME: "/data/Nextcloud/nextcloud_data/data"
+
   vars_files:
     - "vaultfile.yml"
 
@@ -10,33 +18,47 @@
       name: 
         - docker
 
-  - name: Run adminer container 
-    docker_container:
-      name: adminer
-      image: adminer
-      ports:
-        - 8080:8080
+  - name: Create Docker network
+    docker_network:
+      name: nextcloud_network
 
   - name: Run PostgreSQL container
     docker_container:
       name: postgres
+      hostname: postgres
       image: postgres
+      networks:
+        - name: nextcloud_network
       restart: yes
+      restart_policy: always
       env:
         POSTGRES_USER: "{{ POSTGRES_USER }}"
         POSTGRES_PASSWORD: "{{ POSTGRES_PASSWORD }}"
       volumes:
         - "{{ POSTGRES_DATA_VOLUME }}:/var/lib/postgresql/data"
 
+  - name: Run adminer container 
+    docker_container:
+      name: adminer
+      image: adminer
+      networks:
+        - name: nextcloud_network
+      restart: yes
+      ports:
+        - 8080:8080
+
   - name: Run nextcloud container
     docker_container:
       name: nextcloud
       image: linuxserver/nextcloud
+      networks:
+        - name: nextcloud_network
       restart: yes
+      restart_policy: unless-stopped
       env:
         PUID: "1000"
         PGID: "1000"
-        TZ: "Europe/Helsinki"
+        TZ: "{{ timezone }}"
       volumes:
         - "{{ NEXTCLOUD_CONFIG_VOLUME }}:/config"
         - "{{ NEXTCLOUD_DATA_VOLUME }}:/data"
