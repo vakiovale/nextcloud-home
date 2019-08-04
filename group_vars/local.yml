@@ -1,0 +1,6 @@
+---
+timezone: "Europe/Helsinki"
+POSTGRES_USER: "nextcloud"
+POSTGRES_DATA_VOLUME: "/data/Nextcloud/postgres_data"
+NEXTCLOUD_CONFIG_VOLUME: "/data/Nextcloud/nextcloud_data/config"
+NEXTCLOUD_DATA_VOLUME: "/data/Nextcloud/nextcloud_data/data"
